@@ -11,10 +11,11 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(bodyParser.json());
 
-const authRoutes = require("./routes/auth");
+const { router: authRoutes } = require("./routes/auth");
+const userRoutes = require("./routes/user");
 
 app.use('/api/auth', authRoutes);
-// app.use("/api/users", userRoutes);
+app.use('/api/user', userRoutes);
 
 // Start server
 app.listen(port, () => {

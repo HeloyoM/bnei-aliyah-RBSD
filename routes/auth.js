@@ -1,10 +1,13 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { execute } = require('../connection-wrapper');
 
+const secretKey = 'your_jwt_secret_key';  // Replace with a strong, secret key
+
+// 1. Registeration route
 router.post('/register', async (req, res) => {
     const { first_name, last_name, email, password, phone, address } = req.body;
     console.log(req.body)
@@ -27,8 +30,8 @@ router.post('/register', async (req, res) => {
 
         // 4. Insert into user_personal_info
         await execute(
-            'INSERT INTO user_info (id, first_name, last_name) VALUES (?, ?, ?)',
-            [userId, first_name, last_name]
+            'INSERT INTO user_info (id, first_name, last_name, created_at) VALUES (?, ?, ?, ?)',
+            [userId, first_name, last_name, new Date().toLocaleDateString({ region: 'ISR' })]
         );
 
         // 5. Insert into user
@@ -44,6 +47,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// 2. Login route
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -87,11 +91,21 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// 3. Logout route 
+router.post('/logout', verifyToken, (req, res) => {
+    //  Since we are not using revoked_tokens, we just clear the client's token.
+    //  The server doesn't need to do anything, but you might want to perform
+    //  some cleanup or logging here.
+    console.log(`User ${req.user.userId} logged out`); //  Optional:  Log the logout
+    res.json({ message: 'Logged out successfully' });
+});
+
 // 3. Get User Profile (Protected Route)
 router.get('/profile', verifyToken, async (req, res) => {
+    console.log({ req })
     // The verifyToken middleware ensures that only authenticated users can access this route
     //  req.user now contains the data from the JWT payload
-    try{
+    try {
         const user = await execute(
             `SELECT u.email, u.phone, u.address, up.first_name, up.last_name
              FROM user u
@@ -99,21 +113,20 @@ router.get('/profile', verifyToken, async (req, res) => {
              WHERE u.id = ?`,
             [req.user.userId]  // Access user ID from the decoded JWT
         );
-      if(user.length === 0){
-        return res.status(404).json({message: "User not found"});
-      }
+        if (user.length === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
         res.json({
             message: 'Profile retrieved successfully',
             user: user[0],
         });
-    } catch(error){
-      console.error("Error retrieving profile", error);
-      res.status(500).json({ message: 'Internal server error' });
+    } catch (error) {
+        console.error("Error retrieving profile", error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 
 });
-
 
 // 4.  Example of a protected route (requires a valid JWT)
 router.get('/protected', verifyToken, (req, res) => {
@@ -168,6 +181,72 @@ router.post('/refresh', async (req, res) => {
     }
 });
 
+// 6.  Password Reset Request
+router.post('/password-reset-request', async (req, res) => {
+    console.log(req.body)
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
+    try {
+        // 1.  Check if the email exists in the user table
+        const userResult = await execute('SELECT id FROM user WHERE email = ?', [email]);
+        if (userResult.length === 0) {
+            return res.status(404).json({ message: 'Email not found' });
+        }
+        const userId = userResult[0].id;
+
+        // 2. Generate a unique reset token
+        const resetToken = uuidv4();
+        const expiryTime = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        // 3.  Insert the token into the password_reset_tokens table
+        await execute(
+            'INSERT INTO password_reset_tokens (id, user_id, token, expiry_time) VALUES (?, ?, ?, ?)',
+            [uuidv4(), userId, resetToken, expiryTime]
+        );
+
+        //  4.  Send email to the user with the reset link (implementation not shown here)
+        //  You would use a library like Nodemailer to send the email.
+        console.log(`Password reset token for ${email}: ${resetToken}`);  //  For development
+        res.json({ message: 'Password reset email sent (implementation not shown)' }); //  Don't send the token in response in production
+    } catch (error) {
+        console.error('Password reset request error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// 7. Reset Password - Requires JWT
+router.post('/reset-password', verifyToken, async (req, res) => {
+    const { newPassword } = req.body;
+    const userId = req.user.userId; // Get user ID from JWT
+
+    if (!newPassword) {
+        return res.status(400).json({ message: 'New password is required' });
+    }
+
+    try {
+        // 1. Hash the new password
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+        // 2. Update the user's password in the database
+        const result = await execute(
+            'UPDATE user SET password = ? WHERE id = ?',
+            [hashedNewPassword, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'User not found' }); //  Should not happen
+        }
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (error) {
+        console.error('Password reset error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 // Function to generate a refresh token
 function generateRefreshToken() {
     return uuidv4();
@@ -175,7 +254,7 @@ function generateRefreshToken() {
 
 // Function to generate a JWT
 function generateToken(payload) {
-    const secretKey = 'your_jwt_secret_key';  // Replace with a strong, secret key
+
     const options = {
         expiresIn: '1h', // Token expiration time (e.g., 1 hour)
     };
@@ -184,11 +263,11 @@ function generateToken(payload) {
 
 function verifyToken(req, res, next) {
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+    console.log(req.headers)
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
     }
 
-    const secretKey = 'your_jwt_secret_key';  // Replace with your secret key
     jwt.verify(token, secretKey, (err, decoded) => {
         if (err) {
             return res.status(401).json({ message: 'Invalid token' });
@@ -198,4 +277,4 @@ function verifyToken(req, res, next) {
     });
 }
 
-module.exports = router;
+module.exports = { router, verifyToken };
