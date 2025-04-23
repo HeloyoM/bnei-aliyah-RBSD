@@ -61,7 +61,7 @@ router.post('/login', async (req, res) => {
         if (users.length === 0) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-        const user = users[0];
+        let user = users[0];
 
         // 2. Compare the password
         const passwordMatch = await bcrypt.compare(password, user.password);
@@ -84,7 +84,15 @@ router.post('/login', async (req, res) => {
             [uuidv4(), user.id, refreshTokenValue, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)] // 7 days
         );
 
-        res.json({ message: 'Login successful', token, refreshToken: refreshTokenValue });
+        user = await execute(
+            `SELECT u.email, u.phone, u.address, up.first_name, up.last_name
+             FROM user u
+             JOIN user_info up ON u.id = up.id
+             WHERE u.id = ?`,
+            [user.id]  // Access user ID from the decoded JWT
+        );
+
+        res.json({ message: 'Login successful', token, refreshToken: refreshTokenValue, user: user[0], });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Internal server error' });
