@@ -14,10 +14,12 @@ app.use(bodyParser.json());
 const { router: authRoutes } = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const campaignRoutes = require("./routes/campaign");
+const messageRoutes = require("./routes/message");
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/campaign', campaignRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Start server
 app.listen(port, () => {
