@@ -271,7 +271,9 @@ function generateToken(payload) {
 
 function verifyToken(req, res, next) {
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
-    console.log(req.headers)
+    
+    console.log(token)
+    
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
     }
