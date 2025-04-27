@@ -117,7 +117,7 @@ router.get('/profile', verifyToken, async (req, res) => {
     //  req.user now contains the data from the JWT payload
     try {
         const user = await execute(
-            `SELECT u.email, u.phone, u.address, up.first_name, up.last_name, r.level, r.name AS role_name
+            `SELECT u.id, u.email, u.phone, u.address, up.first_name, up.last_name, r.level, r.name AS role_name
              FROM user u
              JOIN user_info up ON u.id = up.id
              JOIN role r ON u.role_id = r.level
