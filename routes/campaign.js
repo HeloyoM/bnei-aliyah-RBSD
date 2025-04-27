@@ -99,7 +99,7 @@ router.get('/types', verifyToken, async (req, res) => {
 router.post('/:campaignId/members', verifyToken, async (req, res) => {
     const { campaignId } = req.params;
     const userId = req.user.userId;
-
+    const { joinComment } = req.body;
     //  Verify that the user making the request is allowed to add members (e.g., organizer)
     //  You'll need to implement your authorization logic here, based on your application's rules.
     //  For example, you might check if the current user (req.user) is the organizer of the campaign.
@@ -127,20 +127,31 @@ router.post('/:campaignId/members', verifyToken, async (req, res) => {
         );
         if (existingMemberResult.length > 0) {
             return res.status(400).json({ message: 'User is already a member of this campaign' });
-        }
-
-        // 4. Add the user to the campaign
-        const memberId = uuidv4();
-        const result = await execute(
-            'INSERT INTO members (id, campaign_id, user_id) VALUES (?, ?, ?)',
-            [memberId, campaignId, userId]
-        );
-
-        if (result.affectedRows === 1) {
-            res.status(201).json({ message: 'User added to campaign successfully', memberId });
         } else {
-            res.status(500).json({ message: 'Failed to add user to campaign' });
+            // 4. Add the user to the campaign
+            const memberId = uuidv4();
+            const result = await execute(
+                'INSERT INTO members (id, campaign_id, user_id) VALUES (?, ?, ?)',
+                [memberId, campaignId, userId]
+            );
+
+
+            // 5. Insert the comment into the member_comments table
+            if (joinComment) {
+                const commentId = uuidv4();
+                await execute(
+                    'INSERT INTO member_comments (id, member_id, comment) VALUES (?, ?, ?)',
+                    [commentId, memberId, joinComment]
+                );
+            }
+            if (result.affectedRows === 1) {
+                res.status(201).json({ message: 'User added to campaign successfully', memberId });
+            } else {
+                res.status(500).json({ message: 'Failed to add user to campaign' });
+            }
         }
+
+
     } catch (error) {
         console.error('Error adding user to campaign:', error);
         res.status(500).json({ message: 'Internal server error', error: error.message });
@@ -149,14 +160,24 @@ router.post('/:campaignId/members', verifyToken, async (req, res) => {
 
 router.get('/:campaignId', verifyToken, async (req, res) => {
     const { campaignId } = req.params;
-    const userId = req.user.userId;
 
     try {
         const campaignMembers = await execute(`
-            SELECT mem.id, mem.joined_date, mem.status, mem.user_id AS member_id, ui.first_name, ui.last_name, u.phone, u.email FROM members mem
-            JOIN user_info ui ON ui.id = mem.user_id
-            JOIN user u ON u.id = mem.user_id
-            WHERE campaign_id = ?
+            SELECT 
+                mem.id,
+                mem.joined_date,
+                mem.status,
+                mem.user_id AS member_id,
+                ui.first_name,
+                ui.last_name,
+                u.phone,
+                u.email,
+                mc.comment 
+            FROM members mem
+            JOIN user u ON mem.user_id = u.id
+            JOIN user_info ui ON ui.id = u.id
+            LEFT JOIN member_comments mc ON mem.id = mc.member_id
+            WHERE mem.campaign_id = ?
             `, [campaignId]);
 
         res.status(200).json(campaignMembers)
