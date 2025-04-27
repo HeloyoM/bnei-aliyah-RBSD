@@ -1,8 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-
 require("dotenv").config();
+const http = require('http')
+
+const { router: authRoutes } = require("./routes/auth");
+const userRoutes = require("./routes/user");
+const campaignRoutes = require("./routes/campaign");
+const { router: messageRoutes , initializeSocketIO} = require("./routes/message");
+const  adminRoutes =  require("./routes/admin");
+
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -11,15 +18,17 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(bodyParser.json());
 
-const { router: authRoutes } = require("./routes/auth");
-const userRoutes = require("./routes/user");
-const campaignRoutes = require("./routes/campaign");
-const messageRoutes = require("./routes/message");
+const server = http.createServer(app);
+
+initializeSocketIO(server);
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/campaign', campaignRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 // Start server
 app.listen(port, () => {

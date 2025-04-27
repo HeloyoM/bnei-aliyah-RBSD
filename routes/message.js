@@ -5,6 +5,18 @@ const { verifyToken } = require('./auth');
 const { execute } = require('../connection-wrapper');
 const { v4: uuidv4 } = require('uuid');
 const { body, validationResult } = require('express-validator');
+const socketIO = require('socket.io');
+
+let io; // Declare a global variable to hold the Socket.IO server instance  
+
+// Function to initialize Socket.IO
+function initializeSocketIO(server) {
+    io = new socketIO.Server(server);
+    
+    io.on('connection', (socket) => {
+        console.log('A user connected:', socket.id);
+    });
+}
 
 // 1. Route to create a new message (sent to all users)
 router.post('/', verifyToken,
@@ -33,13 +45,27 @@ router.post('/', verifyToken,
             );
 
             if (result.affectedRows === 1) {
-                // 4. Send a success response
-                res.status(201).json({ message: 'Message sent successfully', messageId });
+                // Fetch the newly inserted message
+                const newMessageResult = await execute(
+                    `SELECT m.id AS message_id, m.sender_id, u.email AS sender_email,
+                     m.created_at, m.description
+                     FROM messages m
+                     JOIN user u ON m.sender_id = u.id
+                     WHERE m.id = ?`,
+                    [messageId]
+                );
+
+                if (newMessageResult.length > 0) {
+                    const newMessage = newMessageResult[0];
+                    res.status(201).json({ message: 'Message sent successfully', messageId, newMessage });
+                    io.emit('newMessage', newMessage); // Emit after successful DB insertion
+                } else {
+                    res.status(500).json({ message: 'Failed to retrieve new message' });
+                }
             } else {
                 res.status(500).json({ message: 'Failed to send message' });
             }
         } catch (error) {
-            // 5. Handle errors
             console.error('Error sending message:', error);
             res.status(500).json({ message: 'Internal server error', error: error.message });
         }
@@ -50,25 +76,27 @@ router.post('/', verifyToken,
 // 2. Route to get all messages (for a user) and their replies
 router.get('/', verifyToken, async (req, res) => {
     try {
-        const userId = req.user.userId;
-
         // Fetch all messages and their replies
         const messages = await execute(
             `SELECT
                 m.id AS message_id,
                 m.sender_id AS sender_id,
-                u_sender.email AS sender_email,
                 m.description,
                 m.created_at AS created_at,
                 r.id AS reply_id,
                 r.replier_id,
-                u_reply_sender.email AS reply_sender_email,
                 r.description AS reply_description,
-                r.created_at AS reply_created_at
+                r.created_at AS reply_created_at,
+                u_sender.email AS sender_email,
+                r_sender.name AS sender_role,
+                r_reply_sender.name AS reply_sender_role,
+                u_reply_sender.email AS reply_sender_email
             FROM messages m
             JOIN user u_sender ON m.sender_id = u_sender.id
+            JOIN role r_sender ON u_sender.role_id = r_sender.level
             LEFT JOIN replies r ON m.id = r.message_id
             LEFT JOIN user u_reply_sender ON r.replier_id = u_reply_sender.id
+            LEFT JOIN role r_reply_sender ON u_reply_sender.role_id = r_reply_sender.level
             ORDER BY m.created_at DESC, r.created_at ASC
             `
         );
@@ -82,8 +110,10 @@ router.get('/', verifyToken, async (req, res) => {
                 messageMap.set(row.message_id, {
                     message_id: row.message_id,
                     sender_id: row.sender_id,
+                    sender_role: row.sender_role,
                     sender_email: row.sender_email,
                     description: row.description,
+                    sender_role: row.sender_role,
                     created_at: row.created_at,
                     replies: [],
                 });
@@ -97,6 +127,7 @@ router.get('/', verifyToken, async (req, res) => {
                     reply_sender_email: row.reply_sender_email,
                     reply_description: row.reply_description,
                     reply_created_at: row.reply_created_at,
+                    reply_sender_role: row.reply_sender_role
                 });
             }
         });
@@ -107,6 +138,55 @@ router.get('/', verifyToken, async (req, res) => {
         res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 });
+
+
+//  3. Route to reply to a message
+// router.post('/messages/:messageId/replies', verifyToken, [
+//     body('text').notEmpty().withMessage('Reply text is required'),
+// ], async (req, res) => {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//         return res.status(400).json({ errors: errors.array() });
+//     }
+
+//     const { text } = req.body;
+//     const { messageId } = req.params;
+//     const senderId = req.user.userId;
+
+//     try {
+//         const replyId = uuidv4();
+//         const result = await execute(
+//             'INSERT INTO replies (id, message_id, sender_id, text, created_at) VALUES (?, ?, ?, ?, NOW())',
+//             [replyId, messageId, senderId, text]
+//         );
+
+//         if (result.affectedRows === 1) {
+//             // Fetch the newly inserted reply
+//             const newReplyResult = await execute(
+//                 `SELECT r.id AS reply_id, r.sender_id AS reply_sender_id, u.email AS reply_sender_email,
+//                  r.text AS reply_text, r.created_at AS reply_created_at
+//                  FROM replies r
+//                  JOIN user u ON r.sender_id = u.id
+//                  WHERE r.id = ?`,
+//                 [replyId]
+//             );
+
+//             if (newReplyResult.length > 0) {
+//                 const newReply = newReplyResult[0];
+//                 res.status(201).json({ message: 'Reply sent successfully', replyId });
+//                 io.emit('newReply', { messageId, reply: newReply }); // Emit after successful DB insertion
+//             } else {
+//                 res.status(500).json({ message: 'Failed to retrieve new reply' });
+//             }
+//         } else {
+//             res.status(500).json({ message: 'Failed to send reply' });
+//         }
+//     } catch (error) {
+//         console.error('Error sending reply:', error);
+//         res.status(500).json({ message: 'Internal server error', error: error.message });
+//     }
+// });
+
 
 
 // 3. Route to reply to a message
@@ -132,7 +212,23 @@ router.post('/:messageId/replies', verifyToken,
             );
 
             if (result.affectedRows === 1) {
-                res.status(201).json({ message: 'Reply sent successfully', replyId });
+                // Fetch the newly inserted reply
+                const newReplyResult = await execute(
+                    `SELECT r.id AS reply_id, r.sender_id AS reply_sender_id, u.email AS reply_sender_email,
+                     r.text AS reply_text, r.created_at AS reply_created_at
+                     FROM replies r
+                     JOIN user u ON r.sender_id = u.id
+                     WHERE r.id = ?`,
+                    [replyId]
+                );
+
+                if (newReplyResult.length > 0) {
+                    const newReply = newReplyResult[0];
+                    res.status(201).json({ message: 'Reply sent successfully', replyId });
+                    io.emit('newReply', { messageId, reply: newReply }); // Emit after successful DB insertion
+                } else {
+                    res.status(500).json({ message: 'Failed to retrieve new reply' });
+                }
             } else {
                 res.status(500).json({ message: 'Failed to send reply' });
             }
@@ -143,4 +239,4 @@ router.post('/:messageId/replies', verifyToken,
     }
 );
 
-module.exports = router;
+module.exports = { router, initializeSocketIO };

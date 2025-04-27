@@ -55,8 +55,8 @@ router.post('/', verifyToken,
             const campaignId = uuidv4();  // Generate a unique ID for the campaign.
 
             const result = await execute(
-                'INSERT INTO campaign (id, name, description, dueDate, type_id, achieved, created_at, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [campaignId, name, description, mysqlDueDate, type, false, new Date().toLocaleDateString({ region: 'ISR' }), userId]
+                'INSERT INTO campaign (id, name, description, dueDate, type_id, achieved, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [campaignId, name, description, mysqlDueDate, type, false, userId]
             );
 
             if (result.affectedRows === 1) {

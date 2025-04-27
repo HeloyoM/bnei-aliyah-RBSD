@@ -57,7 +57,7 @@ router.post('/login', async (req, res) => {
 
     try {
         // 1. Retrieve the user from the database
-        const users = await execute('SELECT * FROM user WHERE email = ?', [email]);
+        const users = await execute(`SELECT * FROM user WHERE email = ?`, [email]);
         if (users.length === 0) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -73,6 +73,7 @@ router.post('/login', async (req, res) => {
         const payload = {
             userId: user.id,  // Include user ID in the payload
             email: user.email,
+            role_id: user.role_id
             // Add other user-related data you want in the token
         };
         const token = generateToken(payload);
@@ -85,9 +86,10 @@ router.post('/login', async (req, res) => {
         );
 
         user = await execute(
-            `SELECT u.email, u.phone, u.address, up.first_name, up.last_name
+            `SELECT u.email, u.phone, u.address, up.first_name, up.last_name, r.name AS role_name
              FROM user u
              JOIN user_info up ON u.id = up.id
+             JOIN role r ON u.role_id = r.level
              WHERE u.id = ?`,
             [user.id]  // Access user ID from the decoded JWT
         );
@@ -115,9 +117,10 @@ router.get('/profile', verifyToken, async (req, res) => {
     //  req.user now contains the data from the JWT payload
     try {
         const user = await execute(
-            `SELECT u.email, u.phone, u.address, up.first_name, up.last_name
+            `SELECT u.email, u.phone, u.address, up.first_name, up.last_name, r.level, r.name AS role_name
              FROM user u
              JOIN user_info up ON u.id = up.id
+             JOIN role r ON u.role_id = r.level
              WHERE u.id = ?`,
             [req.user.userId]  // Access user ID from the decoded JWT
         );
@@ -169,6 +172,7 @@ router.post('/refresh', async (req, res) => {
         // 2.  Generate a new JWT
         const payload = {
             userId: user_id,
+            // 
         };
         const newAccessToken = generateToken(payload);
         const newRefreshTokenValue = generateRefreshToken();
@@ -271,9 +275,7 @@ function generateToken(payload) {
 
 function verifyToken(req, res, next) {
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
-    
-    console.log(token)
-    
+
     if (!token) {
         return res.status(401).json({ message: 'No token provided' });
     }
