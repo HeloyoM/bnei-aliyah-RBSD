@@ -9,6 +9,7 @@ const userRoutes = require("./routes/user");
 const campaignRoutes = require("./routes/campaign");
 const { router: messageRoutes , initializeSocketIO} = require("./routes/message");
 const  adminRoutes =  require("./routes/admin");
+const  scheduleRoutes =  require("./routes/schedule");
 
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/campaign', campaignRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/schedule', scheduleRoutes);
 
 
 // Start server
