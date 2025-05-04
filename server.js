@@ -10,6 +10,7 @@ const campaignRoutes = require("./routes/campaign");
 const { router: messageRoutes , initializeSocketIO} = require("./routes/message");
 const  adminRoutes =  require("./routes/admin");
 const  scheduleRoutes =  require("./routes/schedule");
+const  lessonRoutes =  require("./routes/lesson");
 
 
 const app = express();
@@ -30,6 +31,7 @@ app.use('/api/campaign', campaignRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/schedule', scheduleRoutes);
+app.use('/api/lesson', lessonRoutes);
 
 
 // Start server
