@@ -77,10 +77,8 @@ router.post('/login', async (req, res) => {
             role_id: user.role_id
             // Add other user-related data you want in the token
         };
-        const resources = await getAllowedResources(user)
-        console.log({ resources })
-
-        payload.allowedResources = resources;
+        const allowedResourcesArray = await getAllowedResources(user)
+        payload.allowedResources = allowedResourcesArray;
 
         const token = generateToken(payload);
         const refreshTokenValue = generateRefreshToken();
@@ -100,7 +98,7 @@ router.post('/login', async (req, res) => {
             [user.id]  // Access user ID from the decoded JWT
         );
 
-        res.json({ message: 'Login successful', token, refreshToken: refreshTokenValue, user: user[0], });
+        res.json({ message: 'Login successful', token, refreshToken: refreshTokenValue, user: user[0], allowedResources: allowedResourcesArray, });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Internal server error' });
