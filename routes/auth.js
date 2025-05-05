@@ -4,13 +4,13 @@ const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { execute } = require('../connection-wrapper');
-
+const { getAllowedResources } = require('../middlewares/getAllowedResources');
 const secretKey = 'your_jwt_secret_key';  // Replace with a strong, secret key
 
 // 1. Registeration route
 router.post('/register', async (req, res) => {
     const { first_name, last_name, email, password, phone, address } = req.body;
-    console.log(req.body)
+
     if (!first_name || !last_name || !email || !password) {
         return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -61,6 +61,7 @@ router.post('/login', async (req, res) => {
         if (users.length === 0) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
+
         let user = users[0];
 
         // 2. Compare the password
@@ -76,6 +77,11 @@ router.post('/login', async (req, res) => {
             role_id: user.role_id
             // Add other user-related data you want in the token
         };
+        const resources = await getAllowedResources(user)
+        console.log({ resources })
+
+        payload.allowedResources = resources;
+
         const token = generateToken(payload);
         const refreshTokenValue = generateRefreshToken();
 
@@ -112,7 +118,6 @@ router.post('/logout', verifyToken, (req, res) => {
 
 // 3. Get User Profile (Protected Route)
 router.get('/profile', verifyToken, async (req, res) => {
-    console.log({ req })
     // The verifyToken middleware ensures that only authenticated users can access this route
     //  req.user now contains the data from the JWT payload
     try {
@@ -195,7 +200,6 @@ router.post('/refresh', async (req, res) => {
 
 // 6.  Password Reset Request
 router.post('/password-reset-request', async (req, res) => {
-    console.log(req.body)
     const { email } = req.body;
     if (!email) {
         return res.status(400).json({ message: 'Email is required' });

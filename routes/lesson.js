@@ -3,6 +3,8 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const { execute } = require('../connection-wrapper'); // Import your database execute function
 const { v4: uuidv4 } = require('uuid');
+const { authenticate, authorize } = require('../middlewares/auth-resources');
+const { verifyToken } = require('./auth');
 
 // Validation middleware for lesson data
 const lessonValidationRules = [
@@ -21,7 +23,7 @@ const lessonValidationRules = [
     })
 ];
 
-router.post('/', lessonValidationRules, async (req, res) => {
+router.post('/', lessonValidationRules, authenticate, authorize('lessons', 'write'), async (req, res) => {
     // Check for validation errors.
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
 const { execute } = require('../connection-wrapper');
 const { body, validationResult } = require('express-validator');
 
@@ -19,7 +18,6 @@ router.post('/', validateTimeField, async (req, res) => {
     }
 
     const { greg_date, mincha_time, shacharis_time, maariv_time, hebrew_date } = req.body;
-
 
     try {
         // Use INSERT ... ON DUPLICATE KEY UPDATE

@@ -4,13 +4,13 @@ const bodyParser = require("body-parser");
 require("dotenv").config();
 const http = require('http')
 
-const { router: authRoutes } = require("./routes/auth");
+const { router: authRoutes, verifyToken } = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const campaignRoutes = require("./routes/campaign");
-const { router: messageRoutes , initializeSocketIO} = require("./routes/message");
-const  adminRoutes =  require("./routes/admin");
-const  scheduleRoutes =  require("./routes/schedule");
-const  lessonRoutes =  require("./routes/lesson");
+const { router: messageRoutes, initializeSocketIO } = require("./routes/message");
+const adminRoutes = require("./routes/admin");
+const scheduleRoutes = require("./routes/schedule");
+const lessonRoutes = require("./routes/lesson");
 
 
 const app = express();
@@ -27,11 +27,11 @@ initializeSocketIO(server);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/campaign', campaignRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/campaign', verifyToken, campaignRoutes);
+app.use('/api/messages', verifyToken, messageRoutes);
+app.use('/api/admin', verifyToken, adminRoutes);
 app.use('/api/schedule', scheduleRoutes);
-app.use('/api/lesson', lessonRoutes);
+app.use('/api/lesson', verifyToken, lessonRoutes);
 
 
 // Start server
