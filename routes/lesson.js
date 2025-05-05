@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // Validation middleware for lesson data
 const lessonValidationRules = [
-    body('greg_date').notEmpty().isDate().withMessage('Gregorian date is required and must be a valid date'),
+    // body('greg_date').notEmpty().isDate().withMessage('Gregorian date is required and must be a valid date'),
     body('start_time').notEmpty().matches(/^([0-9]{2}:[0-9]{2})$/).withMessage('Start time is required and must be in HH:MM format'),
     body('end_time').notEmpty().matches(/^([0-9]{2}:[0-9]{2})$/).withMessage('End time is required and must be in HH:MM format'),
     body('topic').notEmpty().isString().withMessage('Topic is required and must be a string'),
