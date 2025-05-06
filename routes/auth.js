@@ -118,6 +118,7 @@ router.post('/logout', verifyToken, (req, res) => {
 router.get('/profile', verifyToken, async (req, res) => {
     // The verifyToken middleware ensures that only authenticated users can access this route
     //  req.user now contains the data from the JWT payload
+
     try {
         const user = await execute(
             `SELECT u.id, u.email, u.phone, u.address, up.first_name, up.last_name, r.level, r.name AS role_name
@@ -127,13 +128,17 @@ router.get('/profile', verifyToken, async (req, res) => {
              WHERE u.id = ?`,
             [req.user.userId]  // Access user ID from the decoded JWT
         );
+
         if (user.length === 0) {
             return res.status(404).json({ message: "User not found" });
         }
 
+        const allowedResources = await getAllowedResources(req.user)
+
         res.json({
             message: 'Profile retrieved successfully',
             user: user[0],
+            allowedResources
         });
     } catch (error) {
         console.error("Error retrieving profile", error);

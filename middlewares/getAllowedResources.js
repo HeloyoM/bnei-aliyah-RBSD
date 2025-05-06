@@ -2,7 +2,7 @@ const { execute } = require('../connection-wrapper');
 
 const getAllowedResources = async (user) => {
     try {
-
+        console.log({ user })
         let role;
         if (user.role_id === 100) {
             role = 'sysAdmin';
