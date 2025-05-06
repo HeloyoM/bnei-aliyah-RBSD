@@ -11,6 +11,7 @@ const { router: messageRoutes, initializeSocketIO } = require("./routes/message"
 const adminRoutes = require("./routes/admin");
 const scheduleRoutes = require("./routes/schedule");
 const lessonRoutes = require("./routes/lesson");
+const paymentsRouter = require("./routes/payments");
 
 
 const app = express();
@@ -26,12 +27,13 @@ initializeSocketIO(server);
 
 
 app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/user', verifyToken, userRoutes);
 app.use('/api/campaign', verifyToken, campaignRoutes);
 app.use('/api/messages', verifyToken, messageRoutes);
 app.use('/api/admin', verifyToken, adminRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/lesson', verifyToken, lessonRoutes);
+app.use('/api/payments', verifyToken, paymentsRouter);
 
 
 // Start server
