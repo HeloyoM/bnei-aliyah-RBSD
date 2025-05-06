@@ -30,8 +30,8 @@ router.post('/register', async (req, res) => {
 
         // 4. Insert into user_personal_info
         await execute(
-            'INSERT INTO user_info (id, first_name, last_name, created_at) VALUES (?, ?, ?, ?)',
-            [userId, first_name, last_name, new Date().toLocaleDateString({ region: 'ISR' })]
+            'INSERT INTO user_info (id, first_name, last_name, created_at, birthday) VALUES (?, ?, ?, ?, ?)',
+            [userId, first_name, last_name, new Date().toLocaleDateString({ region: 'ISR' }), birthday]
         );
 
         // 5. Insert into user
@@ -40,7 +40,36 @@ router.post('/register', async (req, res) => {
             [userId, email, hashedPassword, phone, address]
         );
 
-        res.status(201).json({ message: 'User registered successfully' });
+        // 3. Generate a JWT
+        const payload = {
+            userId: userId,  // Include user ID in the payload
+            email: email,
+            role_id: 102
+            // Add other user-related data you want in the token
+        };
+        const allowedResourcesArray = await getAllowedResources(payload)
+        payload.allowedResources = allowedResourcesArray;
+
+        const token = generateToken(payload);
+        const refreshTokenValue = generateRefreshToken();
+
+        // Store refresh token in database
+        await execute(
+            'INSERT INTO refresh_tokens (id, user_id, token, expiry_time) VALUES (?, ?, ?, ?)',
+            [uuidv4(), userId, refreshTokenValue, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)] // 7 days
+        );
+
+        const user = await execute(
+            `SELECT u.email, u.phone, u.address, up.first_name, up.last_name, r.name AS role_name
+             FROM user u
+             JOIN user_info up ON u.id = up.id
+             JOIN role r ON u.role_id = r.level
+             WHERE u.id = ?`,
+            [userId]
+        );
+
+        res.json({ message: 'User registered successfully', token, refreshToken: refreshTokenValue, user, allowedResources: allowedResourcesArray, });
+
     } catch (error) {
         console.error('Registration error:', error);
         res.status(500).json({ message: 'Internal server error' });

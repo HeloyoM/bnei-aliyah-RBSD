@@ -33,13 +33,7 @@ router.post('/update-profile', verifyToken, async (req, res) => {
 
 router.get('/all', authenticate, async (req, res) => {
     try {
-        const user = req.user;
-
-        if (user.role_id !== 100 && user.role_id !== 101) {
-            return res.status(403).json({ error: 'Forbidden: You are not authorized to fetch all users information.' });
-        }
-
-        const sql = `SELECT u.id, u.email, u.phone, u.address, up.first_name, up.last_name, r.name AS role_name, r.level
+        const sql = `SELECT u.id, u.email, u.phone, u.address, up.first_name, up.last_name, up.birthday, r.name AS role_name, r.level
              FROM user u
              JOIN user_info up ON u.id = up.id
              JOIN role r ON u.role_id = r.level`
