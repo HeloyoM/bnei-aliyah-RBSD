@@ -39,7 +39,7 @@ router.post('/', lessonValidationRules, authenticate, authorize('lessons', 'writ
         `;
         const values = [lessonId, greg_date, hebrew_date, start_time, end_time, topic, description, teacher];
         const result = await execute(sql, values);
-        res.status(201).json({ message: 'Lesson created successfully', insertId: result.insertId });
+        res.status(201).json({ message: 'Lesson created successfully', insertId: lessonId });
     } catch (error) {
         console.error('Error creating lesson:', error);
         res.status(500).json({ error: 'Failed to create lesson: ' + error.message });
