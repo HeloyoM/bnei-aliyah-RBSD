@@ -9,7 +9,7 @@ const secretKey = 'your_jwt_secret_key';  // Replace with a strong, secret key
 
 // 1. Registeration route
 router.post('/register', async (req, res) => {
-    const { first_name, last_name, email, password, phone, address } = req.body;
+    const { first_name, last_name, email, password, phone, address, birthday } = req.body;
 
     if (!first_name || !last_name || !email || !password) {
         return res.status(400).json({ message: 'Missing required fields' });
