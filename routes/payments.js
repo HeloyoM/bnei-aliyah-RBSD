@@ -31,6 +31,7 @@ router.post('/', authenticate, authorize('payments', 'write'), async (req, res) 
         if (!description || !amount) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
+
         const paymentId = uuidv4();
         const sql = `
             INSERT INTO payments (id, user_id, description, amount, due_date)
@@ -93,16 +94,23 @@ router.put('/:id', authenticate, authorize('payments', 'write'), async (req, res
     }
 });
 
+
+
 // 4. GET payments of all users
-router.get('/all', authenticate, async (req, res) => {
+router.get('/all', authenticate, authorize('payments', 'write'), async (req, res) => {
     try {
-        const user = req.user;
-        if (user.role_id !== 100 && user.role_id !== 101) {
-            return res.status(403).json({ error: 'Forbidden: You are not authorized to view all payments.' });
-        }
-        const sql = 'SELECT * FROM payments';
+        const sql = `SELECT pay.id, pay.description, pay.amount,pay.due_date,pay.status, pay.created_at,   JSON_OBJECT(
+            'id', u.id,
+            'name', CONCAT(ui.first_name, ' ', ui.last_name),
+            'email', u.email
+        ) AS user FROM payments pay
+        LEFT JOIN user_info ui ON ui.id = pay.user_id
+        LEFT JOIN user u ON u.id = pay.user_id`;
+
         const payments = await execute(sql, []);
+
         res.status(200).json(payments);
+
     } catch (error) {
         console.error('Error fetching all payments:', error);
         res.status(500).json({ error: 'Failed to fetch all payments' });
