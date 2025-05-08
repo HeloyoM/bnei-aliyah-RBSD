@@ -8,7 +8,15 @@ const { execute } = require('../connection-wrapper');
 router.get('/', authenticate, async (req, res) => {
     try {
         const userId = req.user.userId;
-        const sql = 'SELECT * FROM payments WHERE user_id = ?';
+        const sql = `SELECT pay.id, pay.description, pay.amount,pay.due_date,pay.status, pay.created_at,   JSON_OBJECT(
+            'id', u.id,
+            'name', CONCAT(ui.first_name, ' ', ui.last_name),
+            'email', u.email
+        ) AS user FROM payments pay
+        LEFT JOIN user_info ui ON ui.id = pay.user_id
+        LEFT JOIN user u ON u.id = pay.user_id
+        WHERE pay.user_id = ?`;
+
         const values = [userId];
         const payments = await execute(sql, values);
         res.json(payments);
