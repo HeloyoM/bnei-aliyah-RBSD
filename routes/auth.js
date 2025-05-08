@@ -135,11 +135,11 @@ router.post('/login', async (req, res) => {
 });
 
 // 3. Logout route 
-router.post('/logout', verifyToken, (req, res) => {
+router.post('/logout', (req, res) => {
     //  Since we are not using revoked_tokens, we just clear the client's token.
     //  The server doesn't need to do anything, but you might want to perform
     //  some cleanup or logging here.
-    console.log(`User ${req.user.userId} logged out`); //  Optional:  Log the logout
+    // console.log(`User ${req.user.userId} logged out`); //  Optional:  Log the logout
     res.json({ message: 'Logged out successfully' });
 });
 
