@@ -32,22 +32,23 @@ router.post('/', verifyToken,
         }
 
         // 2. Extract data from the request body and user ID from JWT
-        const { description } = req.body;
+        const { description, isPublic = 0 } = req.body;
         const senderId = req.user.userId;
 
+        const is_public = isPublic ? 1 : 0;
         // 3. Database Interaction
         try {
             const messageId = uuidv4();
             // Insert the new message into the messages table
             const result = await execute(
-                'INSERT INTO messages (id, description, sender_id) VALUES (?, ?, ?)', // add description
-                [messageId, description, senderId]
+                'INSERT INTO messages (id, description, sender_id, is_public) VALUES (?, ?, ?, ?)', // add description
+                [messageId, description, senderId, is_public]
             );
 
             if (result.affectedRows === 1) {
                 // Fetch the newly inserted message
                 const newMessageResult = await execute(
-                    `SELECT m.id AS message_id, m.sender_id, u.email AS sender_email,
+                    `SELECT m.id AS message_id, m.sender_id, m.is_public, u.email AS sender_email,
                      m.created_at, m.description
                      FROM messages m
                      JOIN user u ON m.sender_id = u.id
@@ -83,6 +84,7 @@ router.get('/', verifyToken, async (req, res) => {
                 m.sender_id AS sender_id,
                 m.description,
                 m.created_at AS created_at,
+                m.is_public,
                 r.id AS reply_id,
                 r.replier_id,
                 r.description AS reply_description,
@@ -115,6 +117,7 @@ router.get('/', verifyToken, async (req, res) => {
                     description: row.description,
                     sender_role: row.sender_role,
                     created_at: row.created_at,
+                    is_public: row.is_public,
                     replies: [],
                 });
                 formattedMessages.push(messageMap.get(row.message_id));

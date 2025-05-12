@@ -11,7 +11,8 @@ const { router: messageRoutes, initializeSocketIO } = require("./routes/message"
 const adminRoutes = require("./routes/admin");
 const scheduleRoutes = require("./routes/schedule");
 const lessonRoutes = require("./routes/lesson");
-const paymentsRouter = require("./routes/payments");
+const paymentsRoutes = require("./routes/payments");
+const eventsRoutes = require("./routes/events");
 
 
 const app = express();
@@ -33,10 +34,9 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/admin', verifyToken, adminRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/lesson', verifyToken, lessonRoutes);
-app.use('/api/payments', verifyToken, paymentsRouter);
+app.use('/api/payments', verifyToken, paymentsRoutes);
+app.use('/api/events', verifyToken, eventsRoutes)
 
-
-// Start server
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
-});
+}); 
