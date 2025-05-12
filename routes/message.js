@@ -168,18 +168,18 @@ router.post('/:messageId/replies', verifyToken,
             if (result.affectedRows === 1) {
                 // Fetch the newly inserted reply
                 const newReplyResult = await execute(
-                    `SELECT r.id AS reply_id, r.sender_id AS reply_sender_id, u.email AS reply_sender_email,
-                     r.text AS reply_text, r.created_at AS reply_created_at
+                    `SELECT r.id AS reply_id, r.replier_id, u.email AS reply_sender_email,
+                     r.description AS reply_description, r.created_at AS reply_created_at
                      FROM replies r
-                     JOIN user u ON r.sender_id = u.id
+                     JOIN user u ON r.replier_id = u.id
                      WHERE r.id = ?`,
                     [replyId]
                 );
 
                 if (newReplyResult.length > 0) {
                     const newReply = newReplyResult[0];
-                    res.status(201).json({ message: 'Reply sent successfully', replyId });
-                    io.emit('newReply', { messageId, reply: newReply }); // Emit after successful DB insertion
+                    res.status(201).json({ message: 'Reply sent successfully', reply: newReply });
+                    // io.emit('newReply', { messageId, reply: newReply }); // Emit after successful DB insertion
                 } else {
                     res.status(500).json({ message: 'Failed to retrieve new reply' });
                 }
@@ -244,4 +244,23 @@ router.get('/guest', verifyToken, async (req, res) => {
         res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 });
+
+// 3. Delete guests message by id
+router.delete('/guest/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+
+        const result = await execute(`DELETE FROM messages WHERE id = ?`, [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Message not found' });
+        }
+
+        res.status(200).json({ message: 'Message deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting message:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = { router, initializeSocketIO };
