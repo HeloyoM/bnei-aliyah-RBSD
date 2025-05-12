@@ -7,16 +7,16 @@ const { v4: uuidv4 } = require('uuid');
 const { body, validationResult } = require('express-validator');
 const socketIO = require('socket.io');
 
-let io; // Declare a global variable to hold the Socket.IO server instance  
+// let io; // Declare a global variable to hold the Socket.IO server instance  
 
-// Function to initialize Socket.IO
-function initializeSocketIO(server) {
-    io = new socketIO.Server(server);
+// // Function to initialize Socket.IO
+// function initializeSocketIO(server) {
+//     io = new socketIO.Server(server);
 
-    io.on('connection', (socket) => {
-        console.log('A user connected:', socket.id);
-    });
-}
+//     io.on('connection', (socket) => {
+//         console.log('A user connected:', socket.id);
+//     });
+// }
 
 // 1. Route to create a new message (sent to all users)
 router.post('/', verifyToken,
@@ -256,11 +256,11 @@ router.delete('/guest/:id', verifyToken, async (req, res) => {
             return res.status(404).json({ message: 'Message not found' });
         }
 
-        res.status(200).json({ message: 'Message deleted successfully' });
+        res.status(200).json({ message: 'Message deleted successfully', message_id: id });
     } catch (error) {
         console.error('Error deleting message:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-module.exports = { router, initializeSocketIO };
+module.exports = { router/*, initializeSocketIO */};

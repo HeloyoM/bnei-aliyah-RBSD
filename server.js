@@ -2,12 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 require("dotenv").config();
-const http = require('http')
+// const http = require('http')
 
 const { router: authRoutes, verifyToken } = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const campaignRoutes = require("./routes/campaign");
-const { router: messageRoutes, initializeSocketIO } = require("./routes/message");
+const { router: messageRoutes/*, initializeSocketIO*/ } = require("./routes/message");
 const adminRoutes = require("./routes/admin");
 const scheduleRoutes = require("./routes/schedule");
 const lessonRoutes = require("./routes/lesson");
@@ -22,9 +22,9 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(bodyParser.json());
 
-const server = http.createServer(app);
+// const server = http.createServer(app);
 
-initializeSocketIO(server);
+// initializeSocketIO(server);
 
 
 app.use('/api/auth', authRoutes);
