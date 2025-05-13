@@ -263,4 +263,28 @@ router.delete('/guest/:id', verifyToken, async (req, res) => {
     }
 });
 
-module.exports = { router/*, initializeSocketIO */};
+
+router.delete('/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    try {
+        const [msg] = await execute('SELECT * FROM messages WHERE id = ?', [id]);
+
+        if (!msg) {
+            return res.status(404).json({ error: 'Message not found' });
+        }
+
+        if (msg.sender_id !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        await execute('DELETE FROM messages WHERE id = ?', [id]);
+
+        res.status(200).json({ message: 'Message deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
+
+module.exports = { router/*, initializeSocketIO */ };

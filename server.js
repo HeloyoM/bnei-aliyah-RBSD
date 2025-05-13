@@ -30,7 +30,7 @@ app.use(bodyParser.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', verifyToken, userRoutes);
 app.use('/api/campaign', verifyToken, campaignRoutes);
-app.use('/api/messages', messageRoutes);
+app.use('/api/messages', messageRoutes); // doesn't use verifyToken, for guests!
 app.use('/api/admin', verifyToken, adminRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/lesson', verifyToken, lessonRoutes);
