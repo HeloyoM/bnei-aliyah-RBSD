@@ -13,6 +13,7 @@ const scheduleRoutes = require("./routes/schedule");
 const lessonRoutes = require("./routes/lesson");
 const paymentsRoutes = require("./routes/payments");
 const eventsRoutes = require("./routes/events");
+const { trackVisitor } = require("./middlewares/trackVisitor");
 
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(bodyParser.json());
 
 // initializeSocketIO(server);
 
+app.use(trackVisitor);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', verifyToken, userRoutes);
@@ -36,6 +38,10 @@ app.use('/api/schedule', scheduleRoutes);
 app.use('/api/lesson', verifyToken, lessonRoutes);
 app.use('/api/payments', verifyToken, paymentsRoutes);
 app.use('/api/events', verifyToken, eventsRoutes)
+
+app.get('/', (req, res) => {
+  res.send('Welcome!');
+});
 
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
