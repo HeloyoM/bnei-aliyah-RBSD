@@ -50,13 +50,25 @@ router.post('/', authenticate, authorize('payments', 'write'), async (req, res) 
 
         const result = await execute(sql, values);
 
-        // Fetch the newly created payment
-        const newPaymentId = result.insertId;
-        const selectSql = 'SELECT * FROM payments WHERE id = ?';
-        const selectValues = [newPaymentId];
-        const newPayment = await execute(selectSql, selectValues);
+        if (result.affectedRows > 0) {
+            // Fetch the newly created payment
+            const selectSql = `
+          SELECT pay.*, JSON_OBJECT(
+            'id', ui.id,
+            'name', CONCAT(ui.first_name, ' ', ui.last_name),
+            'email', u.email
+        ) AS user FROM payments pay
+          LEFT JOIN user_info ui ON ui.id = pay.user_id
+          LEFT JOIN user u ON u.id = pay.user_id
+          WHERE pay.id = ?`;
 
-        res.status(201).json(newPayment[0]); // Return the newly created payment
+            const selectValues = [paymentId];
+            const newPayment = await execute(selectSql, selectValues);
+
+            res.status(201).json(newPayment[0]);
+        }
+
+
     } catch (error) {
         console.error('Error creating payment request:', error);
         res.status(500).json({ error: 'Failed to create payment request' });
@@ -68,11 +80,17 @@ router.put('/:id', authenticate, authorize('payments', 'write'), async (req, res
     try {
         const paymentId = req.params.id;
         const { status } = req.body;
+        const userId = req.user.userId;
 
-        // Check if the user is allowed to update payment status
-        // if (user.role_id !== 100 && user.role_id !== 101) {
-        //     return res.status(403).json({ error: 'Forbidden: You are not authorized to update payment status.' });
-        // }
+        const [pay] = await execute('SELECT * FROM payments WHERE id = ?', [paymentId]);
+
+        if (!pay) {
+            return res.status(404).json({ error: 'Message not found' });
+        }
+
+        if (pay.user_id !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
 
         // Validate the status
         const allowedStatuses = ['pending', 'paid', 'overdue', 'cancelled'];
