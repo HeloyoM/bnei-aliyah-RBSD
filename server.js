@@ -27,7 +27,7 @@ app.use(bodyParser.json());
 
 // initializeSocketIO(server);
 
-app.use(trackVisitor);
+// app.use(trackVisitor);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', verifyToken, userRoutes);

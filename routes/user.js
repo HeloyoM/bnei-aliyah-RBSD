@@ -51,4 +51,28 @@ router.get('/all', authenticate, async (req, res) => {
     }
 });
 
+
+router.post('/user-actions', async (req, res) => {
+    const userId = req.user.userId;
+    const { actionType } = req.body;
+
+    if (!actionType) {
+        return res.status(400).json({ error: 'Missing userId or actionType' });
+    }
+
+    try {
+        const result = await execute(`
+        INSERT INTO user_actions (user_id, action_type)
+        VALUES (?, ?)
+    `, [userId, actionType]);
+
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: 'Action recorded' });
+        }
+    } catch (err) {
+        console.error('Error logging user action:', err);
+        res.status(500).json({ error: 'Failed to log user action' });
+    }
+});
+
 module.exports = router;

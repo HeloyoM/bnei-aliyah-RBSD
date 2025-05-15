@@ -87,6 +87,7 @@ router.post('/login', async (req, res) => {
     try {
         // 1. Retrieve the user from the database
         const users = await execute(`SELECT * FROM user WHERE email = ?`, [email]);
+
         if (users.length === 0) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -97,6 +98,10 @@ router.post('/login', async (req, res) => {
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        if (!user.active === 0) {
+            return res.status(403).json({ error: 'User is deactivated' });
         }
 
         // 3. Generate a JWT

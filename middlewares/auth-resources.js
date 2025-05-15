@@ -12,17 +12,15 @@ const authenticate = async (req, res, next) => {
     try {
         // 2.  Call getAllowedResources to get the allowed resources for the user's role
         const allowedResourcesArray = await getAllowedResources(req.user);
-    
-        req.allowedResources = allowedResourcesArray; // Attach to the request
+
+        req.allowedResources = allowedResourcesArray;
 
         next();
     } catch (error) {
-        // Handle errors from getAllowedResources (e.g., database error)
         console.error('Authentication error:', error);
         res.status(500).json({ error: 'Authentication failed' });
     }
 };
-
 
 const authorize = (resource, scope = 'read') => {
     return (req, res, next) => {
@@ -33,22 +31,42 @@ const authorize = (resource, scope = 'read') => {
 
         const allowedResources = req.allowedResources;
 
-        if (allowedResources /*&& allowedResources[resource]*/) {
+        // if (allowedResources) {
 
-            allowedResources?.map((row, i) => {
+        //     const permissions = allowedResources?.map((row, i) => {
 
-                const r = row.split(':')
-                console.log(r, resource, scope)
+        //         const r = row.split(':')
+        //         console.log(r[0] === resource && r[1] === scope)
+        //         if (r[0] === resource && r[1] === scope) {
+        //             return next();
+        //         }
+        //     })
+        //     console.log(permissions)
+        //     if (permissions.every(value => value === undefined)) {
+        //         return res.status(403).json({ error: `Forbidden: Insufficient permissions for resource "${resource}" with scope "${scope}"` });
+        //     }
+        // } else {
+        //     return res.status(403).json({ error: `Forbidden: Insufficient permissions for resource "${resource}" with scope "${scope}"` });
+        // }
 
-                if (r[0] === resource && r[1] === scope) {
-                    next();
+        if (allowedResources) {
+            for (const row of allowedResources) {
+                const [resName, resScope] = row.split(':');
+                if (resName === resource && resScope === scope) {
+                    return next(); // Stop here and move on to the route handler
                 }
+            }
 
-            })
-
+            // If we looped through all and didn't return:
+            return res.status(403).json({
+                error: `Forbidden: Insufficient permissions for resource "${resource}" with scope "${scope}"`
+            });
         } else {
-            return res.status(403).json({ error: `Forbidden: Insufficient permissions for resource "${resource}" with scope "${scope}"` });
+            return res.status(403).json({
+                error: `Forbidden: Insufficient permissions for resource "${resource}" with scope "${scope}"`
+            });
         }
+
     };
 };
 

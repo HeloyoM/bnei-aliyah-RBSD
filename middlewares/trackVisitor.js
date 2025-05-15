@@ -46,7 +46,7 @@ const trackVisitor = async (req, res, next) => {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [ip, city, region, country_name, latitude, longitude, userAgent, referer]
         );
-        console.log({ result })
+
         // Save visit ID in session or cookie to complete visit later
         res.locals.visitId = result.rows[0].id;
     } catch (error) {
