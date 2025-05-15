@@ -65,7 +65,6 @@ router.get('/users/:userId', authenticate, authorize('users', 'read'), async (re
 });
 
 
-
 // 2. PUT activation bunch of users
 router.put('/users/activation', authenticate, authorize('users', 'delete'), async (req, res) => {
 
@@ -75,10 +74,9 @@ router.put('/users/activation', authenticate, authorize('users', 'delete'), asyn
         return res.status(400).json({ error: 'Invalid user IDs array' });
     }
     const placeholders = user_ids.map(() => '?').join(', ');
-    console.log({ placeholders })
+
     try {
-        // Build dynamic query with parameterized IDs
-        console.log({ user_ids })
+
         const query = `
         UPDATE user
         SET active = CASE
@@ -87,11 +85,9 @@ router.put('/users/activation', authenticate, authorize('users', 'delete'), asyn
         END
         WHERE id IN (${placeholders})
         `;
-        /*
-       
-         */
+
         const result = await execute(query, user_ids);
-        console.log({ result })
+
         if (result.affectedRows > 0) {
             res.status(200).json({ message: 'Users toggled successfully' });
         } else {

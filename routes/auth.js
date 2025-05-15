@@ -108,7 +108,8 @@ router.post('/login', async (req, res) => {
         const payload = {
             userId: user.id,  // Include user ID in the payload
             email: user.email,
-            role_id: user.role_id
+            role_id: user.role_id,
+            active: user.active
             // Add other user-related data you want in the token
         };
         const allowedResourcesArray = await getAllowedResources(user)

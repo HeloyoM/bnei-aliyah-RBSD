@@ -1,6 +1,10 @@
 const { getAllowedResources } = require('./getAllowedResources');
 
 const authenticate = async (req, res, next) => {
+    console.log(req.user)
+    if (!req.user.active) {
+        return res.status(403).json({ error: 'Your account is inactive' });
+    }
 
     // 1.  (Your existing authentication logic)
     //     * Check for a token, validate it, etc.

@@ -13,7 +13,7 @@ const scheduleRoutes = require("./routes/schedule");
 const lessonRoutes = require("./routes/lesson");
 const paymentsRoutes = require("./routes/payments");
 const eventsRoutes = require("./routes/events");
-const { trackVisitor } = require("./middlewares/trackVisitor");
+// const { trackVisitor } = require("./middlewares/trackVisitor");
 
 
 const app = express();
