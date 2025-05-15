@@ -31,24 +31,6 @@ const authorize = (resource, scope = 'read') => {
 
         const allowedResources = req.allowedResources;
 
-        // if (allowedResources) {
-
-        //     const permissions = allowedResources?.map((row, i) => {
-
-        //         const r = row.split(':')
-        //         console.log(r[0] === resource && r[1] === scope)
-        //         if (r[0] === resource && r[1] === scope) {
-        //             return next();
-        //         }
-        //     })
-        //     console.log(permissions)
-        //     if (permissions.every(value => value === undefined)) {
-        //         return res.status(403).json({ error: `Forbidden: Insufficient permissions for resource "${resource}" with scope "${scope}"` });
-        //     }
-        // } else {
-        //     return res.status(403).json({ error: `Forbidden: Insufficient permissions for resource "${resource}" with scope "${scope}"` });
-        // }
-
         if (allowedResources) {
             for (const row of allowedResources) {
                 const [resName, resScope] = row.split(':');

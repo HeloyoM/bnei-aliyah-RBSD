@@ -19,7 +19,7 @@ router.get('/users/:userId', authenticate, authorize('users', 'read'), async (re
             WHERE u.id = ?`, [userId]);
 
         console.log({ userActivity })
-        
+
         if (userActivity.length === 0) {
             return res.json({
                 message: 'Forbidden -This route is protected',
@@ -67,33 +67,35 @@ router.get('/users/:userId', authenticate, authorize('users', 'read'), async (re
 
 
 // 2. PUT activation bunch of users
-router.put('/activation', authenticate, authorize('users', 'delete'), async (req, res) => {
+router.put('/users/activation', authenticate, authorize('users', 'delete'), async (req, res) => {
 
     const { user_ids } = req.body;
 
     if (!Array.isArray(user_ids) || user_ids.length === 0) {
         return res.status(400).json({ error: 'Invalid user IDs array' });
     }
-
+    const placeholders = user_ids.map(() => '?').join(', ');
+    console.log({ placeholders })
     try {
         // Build dynamic query with parameterized IDs
-        const placeholders = user_ids.map((_, i) => `$${i + 1}`).join(', ');
-
+        console.log({ user_ids })
         const query = `
         UPDATE user
         SET active = CASE
-            WHEN active = TRUE THEN FALSE
-            ELSE TRUE
+            WHEN active = 1 THEN 0
+            ELSE 1
         END
         WHERE id IN (${placeholders})
         `;
-
+        /*
+       
+         */
         const result = await execute(query, user_ids);
-
+        console.log({ result })
         if (result.affectedRows > 0) {
             res.status(200).json({ message: 'Users toggled successfully' });
         } else {
-            res.status(400).json({ message: `An error occure while activation users ${placeholders}` })
+            res.status(400).json({ message: `An error occure while activation users` })
         }
     } catch (error) {
         console.error(error);
