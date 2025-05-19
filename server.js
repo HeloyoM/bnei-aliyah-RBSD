@@ -39,10 +39,6 @@ app.use('/api/lesson', verifyToken, lessonRoutes);
 app.use('/api/payments', verifyToken, paymentsRoutes);
 app.use('/api/events', verifyToken, eventsRoutes)
 
-app.get('/', (req, res) => {
-  res.send('Welcome!');
-});
-
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
 }); 
