@@ -236,7 +236,7 @@ router.get('/guest', verifyToken, async (req, res) => {
     try {
         // Fetch all guests messages 
         const messages = await execute(
-            `SELECT * FROM beni.messages WHERE sender_id is null ORDER BY created_at DESC`
+            `SELECT * FROM messages WHERE sender_id is null ORDER BY created_at DESC`
         );
 
         res.status(200).json(messages);

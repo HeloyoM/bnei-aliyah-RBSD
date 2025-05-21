@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+// const LogRocket = require('@sentry/node')
 require("dotenv").config();
 // const http = require('http')
 
@@ -28,6 +29,11 @@ app.use(bodyParser.json());
 // initializeSocketIO(server);
 
 // app.use(trackVisitor);
+
+// app.use((err, req, res, next) => {
+//   LogRocket.captureException(err);
+//   res.status(500).json({ message: 'Something went wrong' });
+// });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', verifyToken, userRoutes);

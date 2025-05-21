@@ -51,7 +51,7 @@ router.post('/', validateTimeField, async (req, res) => {
 router.get('/', async (req, res) => {
 
     try {
-        const sql = `SELECT * FROM beni.schedules`;
+        const sql = `SELECT * FROM schedules`;
         const results = await execute(sql);
 
         const today = new Date();
