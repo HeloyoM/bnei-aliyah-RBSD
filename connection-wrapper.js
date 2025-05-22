@@ -7,7 +7,8 @@ const pool = mysql.createConnection({
     user: process.env.DATABASE_USER_NAME || '',
     password: process.env.DATABASE_PASSWORD || '',
     database: process.env.DATABASE_NAME || '',
-    port: process.env.DB_PORT || 3306
+    port: process.env.DB_PORT || 3306,
+    keepAliveInitialDelay: 1000
 })
 
 // Connect to the database: 
