@@ -100,7 +100,7 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        if (!user.active === 0) {
+        if (user.active === 0) {
             return res.status(403).json({ error: 'User is deactivated' });
         }
 
