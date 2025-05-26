@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 require("dotenv").config();
 // const http = require('http')
 
+const transporter = require('./createTransport');
+
 const { router: authRoutes, verifyToken } = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const campaignRoutes = require("./routes/campaign");
@@ -18,7 +20,6 @@ const eventsRoutes = require("./routes/events");
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors("*"));
 app.use(bodyParser.json());
 
@@ -33,6 +34,25 @@ app.use(bodyParser.json());
 //   res.status(500).json({ message: 'Something went wrong' });
 // });
 
+// Example route to send email
+app.post('/send-email', async (req, res) => {
+  const { to, subject, text } = req.body;
+  console.log({ to, subject, text })
+  try {
+    const result = await transporter.sendMail({
+      from: `"My App" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      text,
+    });
+    console.log({ result })
+    res.status(200).send({ success: true, message: 'Email sent!', result: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ success: false, message: 'Email failed to send' });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/user', verifyToken, userRoutes);
 app.use('/api/campaign', verifyToken, campaignRoutes);
@@ -43,6 +63,7 @@ app.use('/api/lesson', verifyToken, lessonRoutes);
 app.use('/api/payments', verifyToken, paymentsRoutes);
 app.use('/api/events', verifyToken, eventsRoutes)
 
+
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
-}); 
+});
