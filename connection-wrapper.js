@@ -2,7 +2,7 @@
 const mysql = require('mysql2');
 
 // Connect to DB
-const pool = mysql.createConnection({
+const pool = mysql.createPool({
     host: process.env.HOST || '',
     user: process.env.DATABASE_USER_NAME || '',
     password: process.env.DATABASE_PASSWORD || '',
@@ -13,13 +13,13 @@ const pool = mysql.createConnection({
 })
 
 // Connect to the database: 
-pool.connect(err => {
-    if (err) {
-        console.log("Failed to create connection + " + err);
-        return;
-    }
-    console.log("We're connected to MySQL");
-});
+// pool.connect(err => {
+//     if (err) {
+//         console.log("Failed to create connection + " + err);
+//         return;
+//     }
+//     console.log("We're connected to MySQL");
+// });
 
 function execute(sql, params) {
     return new Promise((resolve, reject) => {

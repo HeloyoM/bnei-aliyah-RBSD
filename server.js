@@ -37,7 +37,7 @@ app.use(bodyParser.json());
 // Example route to send email
 app.post('/send-email', async (req, res) => {
   const { to, subject, text } = req.body;
-  console.log({ to, subject, text })
+
   try {
     const result = await transporter.sendMail({
       from: `"My App" <${process.env.SMTP_USER}>`,
@@ -45,7 +45,7 @@ app.post('/send-email', async (req, res) => {
       subject,
       text,
     });
-    console.log({ result })
+
     res.status(200).send({ success: true, message: 'Email sent!', result: result });
   } catch (err) {
     console.error(err);

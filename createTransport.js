@@ -9,5 +9,5 @@ const transporter = nodemailer.createTransport({
         pass: process.env.SMTP_PASS,
     },
 });
-console.log({ transporter })
+
 module.exports = transporter;
