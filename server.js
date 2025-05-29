@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 require("dotenv").config();
+const { trackVisitor } = require('./middlewares/trackVisitor')
 // const http = require('http')
 
 const transporter = require('./createTransport');
@@ -27,7 +28,7 @@ app.use(bodyParser.json());
 
 // initializeSocketIO(server);
 
-// app.use(trackVisitor);
+app.use(trackVisitor);
 
 // app.use((err, req, res, next) => {
 //   LogRocket.captureException(err);

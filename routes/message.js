@@ -6,6 +6,7 @@ const { execute } = require('../connection-wrapper');
 const { v4: uuidv4 } = require('uuid');
 const { body, validationResult } = require('express-validator');
 const socketIO = require('socket.io');
+
 // let io; // Declare a global variable to hold the Socket.IO server instance  
 
 // // Function to initialize Socket.IO
@@ -76,6 +77,7 @@ router.post('/', verifyToken,
 // 2. Route to get all messages (for a user) and their replies
 router.get('/', verifyToken, async (req, res) => {
     // console.log(req.socket.remoteAddress)
+    console.log({ locals: res.locals })
     try {
         // Fetch all messages and their replies
         const messages = await execute(
