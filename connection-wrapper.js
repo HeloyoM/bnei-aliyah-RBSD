@@ -10,16 +10,7 @@ const pool = mysql.createPool({
     port: process.env.DB_PORT,
     keepAliveInitialDelay: 1000,
     enableKeepAlive: true,
-})
-
-// Connect to the database: 
-// pool.connect(err => {
-//     if (err) {
-//         console.log("Failed to create connection + " + err);
-//         return;
-//     }
-//     console.log("We're connected to MySQL");
-// });
+});
 
 function execute(sql, params) {
     return new Promise((resolve, reject) => {
@@ -29,10 +20,8 @@ function execute(sql, params) {
             } else {
                 resolve(results);
             }
-        });
-    });
+        })
+    })
 }
 
-module.exports = {
-    execute
-};
+module.exports = { execute }

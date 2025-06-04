@@ -16,6 +16,7 @@ const scheduleRoutes = require("./routes/schedule");
 const lessonRoutes = require("./routes/lesson");
 const paymentsRoutes = require("./routes/payments");
 const eventsRoutes = require("./routes/events");
+const filesRoutes = require("./routes/files");
 
 
 const app = express();
@@ -62,7 +63,8 @@ app.use('/api/admin', verifyToken, adminRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/lesson', verifyToken, lessonRoutes);
 app.use('/api/payments', verifyToken, paymentsRoutes);
-app.use('/api/events', verifyToken, eventsRoutes)
+app.use('/api/events', verifyToken, eventsRoutes);
+app.use('/api/files', verifyToken, filesRoutes);
 
 
 app.listen(port, () => {
